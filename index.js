@@ -1,6 +1,10 @@
-const express = require('express');
-const puppeteer = require('puppeteer');
-const cors = require('cors');
+import express from 'express';
+import puppeteer from 'puppeteer';
+import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { chromium } from 'playwright-core';
+import chromiumBinary from '@sparticuz/chromium';
 
 const app = express();
 
@@ -19,18 +23,21 @@ app.get('/', (req, res) => {
 });
 
 app.get('/scrape', async (req, res) => {
-  let browser;
+  let browser = null;
 
   try {
-    browser = await puppeteer.launch({
-      headless: false, // Launch a visible browser
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--start-maximized'],
-      defaultViewport: null,
+    const executablePath = await chromiumBinary.executablePath();
+
+    browser = await chromium.launch({
+      args: chromiumBinary.args,
+      executablePath,
+      headless: chromiumBinary.headless,
     });
 
     const page = await browser.newPage();
+
     await page.goto('https://omni.axisbank.co.in/axisretailbanking/', {
-      waitUntil: 'networkidle2',
+      waitUntil: 'networkidle',
     });
 
     await page.type('#custid', 'centfxbgd', { delay: 100 });
@@ -41,7 +48,6 @@ app.get('/scrape', async (req, res) => {
 
     await page.waitForTimeout(10000);
 
-    // 🧠 NOTE: If iframe is cross-origin, this block will fail
     const data = await page.evaluate(() => {
       try {
         const iframe = document.getElementById("bankFrame");
@@ -72,6 +78,7 @@ app.get('/scrape', async (req, res) => {
     });
 
     res.json({ success: true, data });
+
   } catch (err) {
     console.error('[Scraping Error]', err);
     res.json({

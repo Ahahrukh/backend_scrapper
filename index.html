@@ -11,7 +11,7 @@
 
   <script>
     async function scrapeData() {
-      const res = await fetch('https://backend-scrapper.vercel.ap/scrape');
+      const res = await fetch('http://localhost:3000/scrape');
       const result = await res.json();
       const htmlTable = document.getElementById("statementTable");
       htmlTable.innerHTML = "<tr><th>Txn ID</th><th>UPI ID</th><th>Amount</th></tr>";
@@ -27,4 +27,3 @@
   </script>
 </body>
 </html>
-
